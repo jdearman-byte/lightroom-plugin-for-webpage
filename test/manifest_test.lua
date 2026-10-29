@@ -6,6 +6,7 @@ local root = assert(arg[1], 'usage: manifest_test.lua <repo>')
 package.path = arg[0]:gsub('test/manifest_test.lua$', '') .. 'JDWebsite.lrdevplugin/?.lua;' .. package.path
 
 local prefs = {}
+local rename, remove = os.rename, os.remove
 local stubs = {
 	LrDate = { timeToUserFormat = function(t) return t end },
 	LrPathUtils = { child = function(a, b) return a .. '/' .. b end, parent = function(p) return (p:gsub('/[^/]*$', '')) end },
@@ -17,12 +18,16 @@ local stubs = {
 			local f = io.open(p, 'rb'); if f then f:close(); return 'file' end
 			return false
 		end,
-		delete = function(p) return os.remove(p) end,
+		delete = function(p) return remove(p) end,
+		move = function(a, b) return rename(a, b) end,
 	},
 }
 function import(name) return stubs[name] end
 
 local Manifest = require 'Manifest'
+-- Lightroom's sandbox has no os.rename/os.remove; make sure plugin code
+-- doesn't rely on them (the stubs above keep their own references).
+os.rename, os.remove = nil, nil
 
 local failures = 0
 local function check(cond, msg)

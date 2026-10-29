@@ -291,7 +291,8 @@ function Manifest.write(manifest, settings)
 	f:write(Manifest.toYaml(manifest))
 	f:close()
 	if LrFileUtils.exists(path) then LrFileUtils.delete(path) end
-	if not os.rename(tmp, path) then return false, 'Could not replace ' .. path end
+	-- Lightroom's Lua has no os.rename; LrFileUtils.move does the same job.
+	if not LrFileUtils.move(tmp, path) then return false, 'Could not replace ' .. path end
 	Log:info('wrote ' .. path)
 	return true
 end
